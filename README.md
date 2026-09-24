@@ -29,15 +29,21 @@ python -m pip install laya
 
 Python 3.10 or newer. Optional extras: `laya[serve]` (HTTP server), `laya[mcp]` (MCP server), `laya[langchain]` (LangChain and LangGraph), `laya[onnx]` (ONNX Runtime), `laya[fast]` (TileLang GPU fast path). Step-by-step setup for each platform, CPU-only or GPU PyTorch builds, and troubleshooting are in [Installation details](#installation-details).
 
+**Long documents.** `laya-multilingual` reads up to 8,192 tokens with `max_len=8192`. Measured accuracy and time by document length, reproducible with [`research/scripts/bench_long_context.py`](https://github.com/NandhaKishorM/laya/blob/main/research/scripts/bench_long_context.py):
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/NandhaKishorM/laya/main/assets/long_context_8192.png" alt="laya-multilingual with max_len=8192: 16 to 18 of 20 requests correct with up to about 4,000 tokens of text before them, more variable beyond" width="100%" />
+</p>
+
 ## Quickstart
 
-> **Long documents: `laya-multilingual` reads up to 8,192 tokens.** It ships with a 1,024-token limit; raise it per call:
+> **Long documents: `laya-multilingual` reads up to 8,192 tokens.** It ships with a 1,024-token limit that cuts long documents off, so pass `max_len=8192` for them:
 >
 > ```python
 > result = router.predict(long_document, questions, model="multilingual", max_len=8192)
 > ```
 >
-> **Accuracy does not drop.** Short inputs give identical answers at either limit. On long inputs it improves: with the request placed after about 6,300 tokens of other text, 8 of 10 test requests were answered correctly at 8,192, against 3 of 10 at the default limit, which cuts the request off. **Speed:** short inputs run at the same speed, because the cost follows the input's real length, not the limit. Long inputs take longer in proportion to their length: a 6,300-token input took 2.5 s instead of 0.18 s on an Apple GPU (8 s instead of 0.35 s on CPU). Name the checkpoint with `model="multilingual"`, since long mostly-English text would otherwise route to the English checkpoint.
+> In the table above, 16 to 18 of 20 requests were answered correctly with up to about 4,000 tokens of text before them; beyond that results vary (8 to 17 of 20), so check long-document accuracy on your own data. Short inputs give identical answers with `max_len=8192`, and speed follows the input's real length, not the limit: short inputs are unchanged, and a 4,000-token input takes about 1.7 s on an Apple GPU. Name the checkpoint with `model="multilingual"`, since long mostly-English text would otherwise route to the English checkpoint.
 
 ```python
 from laya import Router
@@ -84,9 +90,9 @@ The shipped checkpoints work zero-shot, but fine-tuning on decisions from your o
 
 **[nandhakishorm.github.io/laya](https://nandhakishorm.github.io/laya/)**: guides for [prediction hooks](https://nandhakishorm.github.io/laya/hooks/), [schema-driven decisions](https://nandhakishorm.github.io/laya/structured/), [Docker](https://nandhakishorm.github.io/laya/docker/) and [LangChain and LangGraph](https://nandhakishorm.github.io/laya/langchain/), plus a full [API reference](https://nandhakishorm.github.io/laya/reference/).
 
-## What's new in 0.3.18
+## What's new in 0.3.20
 
-* **Long documents on `laya-multilingual`.** The Quickstart now shows how to read up to 8,192 tokens with `max_len=8192`, with measured speed and accuracy.
+* **Long documents with `max_len=8192`.** A measured table below Installation shows accuracy and time for `laya-multilingual` by document length, from a reproducible benchmark: strong up to about 4,000 tokens of text, more variable beyond.
 * **Installation, quickstart and documentation first.** This README now opens with how to install Laya, runnable English and multilingual examples, how fine-tuning improves accuracy, and where the docs are.
 * **Documentation site** at [nandhakishorm.github.io/laya](https://nandhakishorm.github.io/laya/), with an API reference generated from the docstrings.
 
